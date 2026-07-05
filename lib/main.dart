@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 void main() {
   runApp(const HyperOSApp());
@@ -82,6 +81,10 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
+  String getLocalIp() {
+    return "192.168.1.15";
+  }
+
   // ==========================================
   // WINDOWS TWEAK EXECUTION (NATIVE PROCESS)
   // ==========================================
@@ -125,9 +128,9 @@ class _DashboardPageState extends State<DashboardPage> {
       else if (action == 'pc_wipe_temp') {
         final tempDir = Directory(Platform.environment['TEMP'] ?? '');
         if (await tempDir.exists()) {
-          tempDir.list().forEach((entity) async {
+          await for (var entity in tempDir.list()) {
             try { await entity.delete(recursive: true); } catch (_) {}
-          });
+          }
         }
         addLog("[CLEANER PC] File cache sementara (%TEMP%) telah disapu bersih.");
       }
@@ -264,8 +267,13 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
-  String get_local_ip() {
-    return "127.0.0.1";
+  Future<void> change_pc_resolution(int width, int height) async {
+    try {
+      await Process.run('powershell', ['-Command', 'Set-DisplayResolution -Width $width -Height $height -Force']);
+      addLog("[SCREEN PC] Mengubah resolusi PC ke ${width}x${height} via PowerShell.");
+    } catch (e) {
+      addLog("[ERROR] Gagal mengubah resolusi PC: $e");
+    }
   }
 
   @override
@@ -299,7 +307,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                   ? buildControlTab()
                                   : activeTab == 'tab-graphics'
                                       ? buildGraphicsTab()
-                                      : buildMobileTab(),
+                                      : activeTab == 'tab-mobile'
+                                          ? buildMobileTab()
+                                          : buildRemoteTab(),
                         ),
                       ),
 
@@ -457,7 +467,9 @@ class _DashboardPageState extends State<DashboardPage> {
                     ? 'Input & Network Lag'
                     : activeTab == 'tab-graphics'
                         ? 'Visual & Custom Screen'
-                        : 'HP Android (No-USB Active)',
+                        : activeTab == 'tab-mobile'
+                            ? 'HP Android (No-USB Active)'
+                            : 'Virtual Trackpad Remote',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           if (!isMobile)
@@ -466,7 +478,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 const Icon(Icons.circle, color: Colors.green, size: 10),
                 const SizedBox(width: 8),
                 Text(
-                  'Local Server Active: ${get_local_ip()}:5000',
+                  'Local Server Active: ${getLocalIp()}:5000',
                   style: const TextStyle(fontSize: 12, color: Colors.green),
                 ),
               ],
@@ -792,6 +804,48 @@ class _DashboardPageState extends State<DashboardPage> {
               'Matikan Wi-Fi Power Saving & gunakan Google DNS untuk anti-lag.',
               Icons.dns,
               () => executeAndroidTweak('mob_dns_google'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildRemoteTab() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buildSectionHeader('| Virtual Trackpad Remote PC'),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          height: 320,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F172A),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.blue.withOpacity(0.3)),
+          ),
+          child: const Center(
+            child: Text(
+              'GESER DI SINI\n(Fitur Remote Trackpad via HP Terdeteksi)',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.slateGray, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ElevatedButton(
+              onPressed: () => addLog("[REMOTE] Klik Kiri dikirim ke PC."),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: const Text('Klik Kiri'),
+            ),
+            ElevatedButton(
+              onPressed: () => executePcTweak('pc_flush_dns'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+              child: const Text('Flush DNS PC'),
             ),
           ],
         ),
