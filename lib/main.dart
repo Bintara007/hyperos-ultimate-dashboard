@@ -82,7 +82,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   String getLocalIp() {
-    return "192.168.1.15";
+    return "192.168.1.15"; // Representasi IP lokal untuk UI Remote HP
   }
 
   // ==========================================
