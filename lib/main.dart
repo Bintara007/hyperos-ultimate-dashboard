@@ -348,6 +348,15 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  Future<void> change_pc_resolution(int width, int height) async {
+    try {
+      await Process.run('powershell', ['-Command', 'Set-DisplayResolution -Width $width -Height $height -Force']);
+      addLog("[SCREEN PC] Mengubah resolusi PC ke ${width}x${height} via PowerShell.");
+    } catch (e) {
+      addLog("[ERROR] Gagal mengubah resolusi PC: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isMobile = MediaQuery.of(context).size.width < 768;
@@ -584,7 +593,7 @@ class _DashboardPageState extends State<DashboardPage> {
             buildTweakCard(
               'Optimize CPU Priority',
               'Suntik prioritas CPU emulator HD-Player ke kelas tinggi.',
-              Icons.memory,
+              Icons.developer_board,
               () => executePcTweak('pc_cpu_priority'),
             ),
             buildTweakCard(
@@ -1150,7 +1159,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: ElevatedButton(
                 onPressed: () => executeAndroidTweak('mob_restore'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[800],
+                  backgroundColor: Colors.grey,
                   padding: const EdgeInsets.all(16),
                 ),
                 child: const Text('KEMBALIKAN KE DEFAULT PABRIK'),
@@ -1235,7 +1244,7 @@ class _DashboardPageState extends State<DashboardPage> {
               onPressed: () => addLog("[REMOTE] Tutup Aplikasi dikirim ke PC (Alt + F4)."),
               icon: const Icon(Icons.close),
               label: const Text('Close App'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red.withOpacity(0.3)),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             ),
           ],
         ),
