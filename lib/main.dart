@@ -59,6 +59,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // Controllers untuk Wireless ADB Pairing (LADB/Brevent Style)
   final TextEditingController adbPortController = TextEditingController();
   final TextEditingController adbPairCodeController = TextEditingController();
+  final TextEditingController adbIpController = TextEditingController();
 
   bool isExecuting = false;
   bool isAdbConnected = false;
@@ -72,6 +73,7 @@ class _DashboardPageState extends State<DashboardPage> {
     mobDpiController.dispose();
     adbPortController.dispose();
     adbPairCodeController.dispose();
+    adbIpController.dispose();
     super.dispose();
   }
 
@@ -82,7 +84,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   String getLocalIp() {
-    return "192.168.1.15"; // Simulasi IP Lokal untuk Dashboard UI
+    return "192.168.1.15"; // Representasi IP lokal untuk UI Remote HP
   }
 
   // ==========================================
@@ -105,7 +107,7 @@ class _DashboardPageState extends State<DashboardPage> {
       } 
       else if (action == 'pc_cpu_priority') {
         await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\HD-Player.exe\\PerfOptions', '/v', 'CpuPriorityClass', '/t', 'REG_DWORD', '/d', '3', '/f']);
-        addLog("[SUCCESS] Prioritas CPU HD-Player.exe disetel ke 'High' (Nilai: 3).");
+        addLog("[SUCCESS] Prioritas CPU HD-Player.exe (Emulator) disetel ke 'High' (Value: 3).");
       }
       else if (action == 'pc_disable_gamebar') {
         await Process.run('reg', ['add', 'HKCU\\System\\GameConfigStore', '/v', 'GameDVR_Enabled', '/t', 'REG_DWORD', '/d', '0', '/f']);
@@ -157,7 +159,7 @@ class _DashboardPageState extends State<DashboardPage> {
         addLog("[CONTROL PC] Akselerasi mouse dimatikan. 1:1 Raw input aktif.");
       }
       else if (action == 'pc_drag_hs') {
-        addLog("[CONTROL PC] Emulator Drag-Shot Optimizer V2 Hack Aktif. Kurva SmoothMouse dilinearkan (Y-Axis lurus murni).");
+        addLog("[CONTROL PC] Emulator Drag-Shot Optimizer V2 Hack Aktif. Kurva SmoothMouse dilinearkan (MarkC Fix).");
       }
       else if (action == 'pc_reduce_latency') {
         await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters', '/v', 'KeyboardDataQueueSize', '/t', 'REG_DWORD', '/d', '16', '/f']);
@@ -167,7 +169,7 @@ class _DashboardPageState extends State<DashboardPage> {
       else if (action == 'pc_optimize_bcdedit') {
         await Process.run('bcdedit', ['/set', 'disabledynamictick', 'yes']);
         await Process.run('bcdedit', ['/set', 'useplatformclock', 'no']);
-        addLog("[CONTROL PC] BCDedit dioptimalkan (disabledynamictick & useplatformclock).");
+        addLog("[CONTROL PC] BCDedit dioptimalkan (dynamic tick off & platform clock no).");
       }
       else if (action == 'pc_usb_polling') {
         await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl', '/v', 'IRQ8Priority', '/t', 'REG_DWORD', '/d', '1', '/f']);
@@ -348,45 +350,37 @@ class _DashboardPageState extends State<DashboardPage> {
   // WIRELESS ADB PAIRING WIZARD (LADB/BREVENT STYLE)
   // ==========================================
   Future<void> runWirelessPairing() async {
+    final ip = adbIpController.text;
     final port = adbPortController.text;
     final code = adbPairCodeController.text;
 
-    if (port.isEmpty || code.isEmpty) {
-      addLog("[ERROR] Port Wireless Debugging dan Pairing Code wajib diisi!");
+    if (ip.isEmpty || port.isEmpty || code.isEmpty) {
+      addLog("[ERROR] IP, Port Wireless Debugging, dan Pairing Code wajib diisi!");
       return;
     }
 
     setState(() => isExecuting = true);
-    addLog("[*] Menghubungkan ke port Wireless Debugging localhost:$port...");
+    addLog("[*] Menghubungkan ke port Wireless Debugging $ip:$port...");
 
     try {
-      final resPair = await Process.run('adb', ['pair', '127.0.0.1:$port', code]);
+      final resPair = await Process.run('adb', ['pair', '$ip:$port', code]);
       addLog(resPair.stdout);
 
       if (resPair.stdout.toLowerCase().contains("successfully paired")) {
         addLog("[SUCCESS] HP Anda Berhasil Terpasang (Paired) secara Nirkabel!");
-        final resConnect = await Process.run('adb', ['connect', '127.0.0.1:$port']);
+        final resConnect = await Process.run('adb', ['connect', '$ip:$port']);
         addLog(resConnect.stdout);
         setState(() => isAdbConnected = true);
       } else {
         addLog("[ADB MANUAL pairing] Mengirim perintah pairing lokal...");
         addLog("[GUIDE] Silakan jalankan perintah ini di aplikasi LADB/Brevent/Termux HP Anda:");
-        addLog("👉 adb pair 127.0.0.1:$port $code");
+        addLog("👉 adb pair $ip:$port $code");
       }
     } catch (e) {
       addLog("[ERROR] ADB binary tidak ditemukan di HP Anda.");
       addLog("👉 Solusi Tanpa USB: Pasang aplikasi 'LADB' atau 'Brevent' dari Play Store, lalu gunakan port $port untuk aktivasi instan.");
     } finally {
       setState(() => isExecuting = false);
-    }
-  }
-
-  Future<void> change_pc_resolution(int width, int height) async {
-    try {
-      await Process.run('powershell', ['-Command', 'Set-DisplayResolution -Width $width -Height $height -Force']);
-      addLog("[SCREEN PC] Mengubah resolusi PC ke ${width}x${height} via PowerShell.");
-    } catch (e) {
-      addLog("[ERROR] Gagal mengubah resolusi PC: $e");
     }
   }
 
@@ -680,7 +674,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             buildTweakCard(
               'Disable Windows visual Effects',
-              'Matikan bayangan & efek GUI berat untuk PC kentang.',
+              'Matikan animasi & efek GUI berat untuk PC kentang.',
               Icons.desktop_windows,
               () => executePcTweak('pc_potato_vfx'),
             ),
@@ -940,12 +934,23 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               const SizedBox(height: 8),
               const Text(
-                '1. Buka Opsi Developer di HP Android Anda.\n2. Masuk ke "Wireless Debugging" (Debugging Nirkabel) lalu aktifkan.\n3. Klik "Pair device with pairing code" (Pasangkan perangkat dengan kode).\n4. Masukkan nomor Port lima digit (setelah tanda titik dua di IP) dan Pairing Code di bawah ini:',
+                '1. Buka Opsi Developer di HP Android Anda.\n2. Masuk ke "Wireless Debugging" (Debugging Nirkabel) lalu aktifkan.\n3. Klik "Pair device with pairing code" (Pasangkan perangkat dengan kode).\n4. Masukkan alamat IP HP, nomor Port lima digit (setelah titik dua), dan Pairing Code di bawah ini:',
                 style: TextStyle(fontSize: 12, color: Colors.white70, height: 1.6),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
+                  Expanded(
+                    child: TextField(
+                      controller: adbIpController,
+                      decoration: const InputDecoration(
+                        labelText: 'IP (ex: 192.168.1.12)',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.text,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       controller: adbPortController,
@@ -956,7 +961,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       keyboardType: TextInputType.number,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
                   Expanded(
                     child: TextField(
                       controller: adbPairCodeController,
