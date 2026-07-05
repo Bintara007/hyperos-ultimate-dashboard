@@ -18,31 +18,35 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: "zulu"
-          java-version: "17"
+          distribution: 'zulu'
+          java-version: '17'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.19.0"
-          channel: "stable"
+          flutter-version: '3.19.0'
+          channel: 'stable'
           cache: true
 
-      # LANGKAH CRITICAL: Membuat folder native Android secara otomatis di Cloud
-      - name: Recreate Android Project Scaffolding
+      # LANGKAH CRITICAL: Membuat folder native Android terisolasi agar tidak merusak kode lokal Anda
+      - name: Create Clean Flutter Project
         run: |
-          flutter create . --platforms=android --org com.bintara007.hyperos --project-name hyperos_ultimate_dashboard
+          flutter create hyperos_ultimate_dashboard --platforms=android --org com.bintara007.hyperos
+          cp lib/main.dart hyperos_ultimate_dashboard/lib/main.dart
+          cp pubspec.yaml hyperos_ultimate_dashboard/pubspec.yaml
 
       - name: Install Dependencies
         run: |
+          cd hyperos_ultimate_dashboard
           flutter pub get
 
       - name: Build APK Release
         run: |
+          cd hyperos_ultimate_dashboard
           flutter build apk --release
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: HyperOS_Ultimate_Dashboard_APK
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: hyperos_ultimate_dashboard/build/app/outputs/flutter-apk/app-release.apk
