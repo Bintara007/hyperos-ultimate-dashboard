@@ -28,6 +28,11 @@ jobs:
           channel: "stable"
           cache: true
 
+      # LANGKAH CRITICAL: Membuat folder native Android secara otomatis di Cloud
+      - name: Recreate Android Project Scaffolding
+        run: |
+          flutter create . --platforms=android --org com.bintara007.hyperos --project-name hyperos_ultimate_dashboard
+
       - name: Install Dependencies
         run: |
           flutter pub get
