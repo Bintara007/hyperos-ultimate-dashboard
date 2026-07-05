@@ -12,7 +12,7 @@ class HyperOSApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HyperOS Ultimate Dashboard v7.0',
+      title: 'HYPEROS Ultimate Dashboard v7.0',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -59,6 +59,7 @@ class _DashboardPageState extends State<DashboardPage> {
   // Controllers untuk Wireless ADB Pairing (LADB/Brevent Style)
   final TextEditingController adbPortController = TextEditingController();
   final TextEditingController adbPairCodeController = TextEditingController();
+  final TextEditingController pcServerIpController = TextEditingController(text: "192.168.1.15");
 
   bool isExecuting = false;
   bool isAdbConnected = false;
@@ -72,6 +73,7 @@ class _DashboardPageState extends State<DashboardPage> {
     mobDpiController.dispose();
     adbPortController.dispose();
     adbPairCodeController.dispose();
+    pcServerIpController.dispose();
     super.dispose();
   }
 
@@ -79,10 +81,6 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       consoleLogs.add("[${DateTime.now().toString().substring(11, 19)}] $message");
     });
-  }
-
-  String getLocalIp() {
-    return "192.168.1.15"; // Representasi IP lokal untuk UI Remote HP
   }
 
   // ==========================================
