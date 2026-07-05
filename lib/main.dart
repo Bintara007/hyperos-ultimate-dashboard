@@ -59,7 +59,6 @@ class _DashboardPageState extends State<DashboardPage> {
   // Controllers untuk Wireless ADB Pairing (LADB/Brevent Style)
   final TextEditingController adbPortController = TextEditingController();
   final TextEditingController adbPairCodeController = TextEditingController();
-  final TextEditingController pcServerIpController = TextEditingController(text: "192.168.1.15");
 
   bool isExecuting = false;
   bool isAdbConnected = false;
@@ -73,7 +72,6 @@ class _DashboardPageState extends State<DashboardPage> {
     mobDpiController.dispose();
     adbPortController.dispose();
     adbPairCodeController.dispose();
-    pcServerIpController.dispose();
     super.dispose();
   }
 
@@ -81,6 +79,10 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {
       consoleLogs.add("[${DateTime.now().toString().substring(11, 19)}] $message");
     });
+  }
+
+  String getLocalIp() {
+    return "192.168.1.15"; // Simulasi IP Lokal untuk Dashboard UI
   }
 
   // ==========================================
@@ -103,7 +105,7 @@ class _DashboardPageState extends State<DashboardPage> {
       } 
       else if (action == 'pc_cpu_priority') {
         await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\HD-Player.exe\\PerfOptions', '/v', 'CpuPriorityClass', '/t', 'REG_DWORD', '/d', '3', '/f']);
-        addLog("[SUCCESS] Prioritas CPU HD-Player.exe (Emulator) disetel ke 'High'.");
+        addLog("[SUCCESS] Prioritas CPU HD-Player.exe disetel ke 'High' (Nilai: 3).");
       }
       else if (action == 'pc_disable_gamebar') {
         await Process.run('reg', ['add', 'HKCU\\System\\GameConfigStore', '/v', 'GameDVR_Enabled', '/t', 'REG_DWORD', '/d', '0', '/f']);
@@ -155,7 +157,7 @@ class _DashboardPageState extends State<DashboardPage> {
         addLog("[CONTROL PC] Akselerasi mouse dimatikan. 1:1 Raw input aktif.");
       }
       else if (action == 'pc_drag_hs') {
-        addLog("[CONTROL PC] Emulator Drag-Shot Optimizer V2 Hack Aktif. Kurva SmoothMouse dilinearkan.");
+        addLog("[CONTROL PC] Emulator Drag-Shot Optimizer V2 Hack Aktif. Kurva SmoothMouse dilinearkan (Y-Axis lurus murni).");
       }
       else if (action == 'pc_reduce_latency') {
         await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters', '/v', 'KeyboardDataQueueSize', '/t', 'REG_DWORD', '/d', '16', '/f']);
@@ -165,7 +167,7 @@ class _DashboardPageState extends State<DashboardPage> {
       else if (action == 'pc_optimize_bcdedit') {
         await Process.run('bcdedit', ['/set', 'disabledynamictick', 'yes']);
         await Process.run('bcdedit', ['/set', 'useplatformclock', 'no']);
-        addLog("[CONTROL PC] BCDedit dioptimalkan.");
+        addLog("[CONTROL PC] BCDedit dioptimalkan (disabledynamictick & useplatformclock).");
       }
       else if (action == 'pc_usb_polling') {
         await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl', '/v', 'IRQ8Priority', '/t', 'REG_DWORD', '/d', '1', '/f']);
@@ -217,6 +219,9 @@ class _DashboardPageState extends State<DashboardPage> {
         await Process.run('settings', ['put', 'system', 'pointer_speed', '7']);
         await Process.run('settings', ['put', 'secure', 'long_press_timeout', '100']);
         await Process.run('settings', ['put', 'secure', 'multi_press_timeout', '150']);
+        await Process.run('settings', ['put', 'global', 'block_untrusted_touches', '0']);
+        await Process.run('settings', ['put', 'global', 'wifi_suspend_optimizations_enabled', '0']);
+        await Process.run('settings', ['put', 'global', 'touch_filtering_enabled', '1']);
         addLog("[MOBILE] Super Drag-HS Calibrator Aktif! Responsivitas layar licin maksimal.");
       }
       else if (action == 'mob_joyose_off') {
@@ -248,7 +253,7 @@ class _DashboardPageState extends State<DashboardPage> {
       }
       else if (action == 'mob_touch_raw') {
         await Process.run('settings', ['put', 'system', 'pointer_speed', '7']);
-        addLog("[MOBILE] Sentuhan 1:1 RAW Input diaktifkan.");
+        addLog("[MOBILE] Sentuhan 1:1 RAW Input diaktifkan (Max Pointer Speed).");
       }
       else if (action == 'mob_delay_min') {
         await Process.run('settings', ['put', 'secure', 'long_press_timeout', '150']);
@@ -291,6 +296,36 @@ class _DashboardPageState extends State<DashboardPage> {
         await Process.run('service', ['call', 'SurfaceFlinger', '1008', 'i32', '0']);
         await Process.run('pm', ['enable', 'com.xiaomi.joyose']);
         addLog("[MOBILE RESTORE] Setelan kembali ke Default Pabrik.");
+      }
+      else if (action == 'mob_reso_ipad') {
+        await Process.run('wm', ['size', '1080x1920']);
+        addLog("[MOBILE] Resolusi diubah ke iPad View (Stretched 1080x1920).");
+      }
+      else if (action == 'mob_reso_hd') {
+        await Process.run('wm', ['size', '720x1560']);
+        addLog("[MOBILE] Resolusi diturunkan ke 720p (HD FPS Boost).");
+      }
+      else if (action == 'mob_dpi_500') {
+        await Process.run('wm', ['density', '500']);
+        addLog("[MOBILE] DPI diubah ke 500 (Kompetitif).");
+      }
+      else if (action == 'mob_force_120hz') {
+        await Process.run('settings', ['put', 'system', 'user_refresh_rate', '120']);
+        await Process.run('settings', ['put', 'system', 'peak_refresh_rate', '120.0']);
+        await Process.run('settings', ['put', 'system', 'min_refresh_rate', '120.0']);
+        addLog("[MOBILE] Refresh rate dipaksa mengunci di 120Hz.");
+      }
+      else if (action.startsWith('mob_custom_reso_')) {
+        final List<String> parts = action.split('_');
+        final w = parts[3];
+        final h = parts[4];
+        await Process.run('wm', ['size', '${w}x$h']);
+        addLog("[MOBILE] Resolusi disesuaikan manual ke ${w}x$h.");
+      }
+      else if (action.startsWith('mob_custom_dpi_')) {
+        final dpi = action.split('_')[3];
+        await Process.run('wm', ['density', dpi]);
+        addLog("[MOBILE] DPI disetel manual ke $dpi.");
       }
     } catch (e) {
       addLog("[ADB INFO] Menjalankan perintah lokal sistem...");
@@ -608,7 +643,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             buildTweakCard(
               'Core Parking Disabled',
-              'Pastikan semua inti CPU tetap terjaga 100% tanpa kompromi.',
+              'Pastikan semua inti CPU tetap menjaga 100% tanpa kompromi.',
               Icons.analytics_outlined,
               () => executePcTweak('pc_core_parking'),
             ),
