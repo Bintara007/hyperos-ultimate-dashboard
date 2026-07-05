@@ -111,10 +111,12 @@ class _DashboardPageState extends State<DashboardPage> {
       final request = await client.postUrl(url);
       request.headers.set('content-type', 'application/json');
       
-      final body = {
+      final Map<String, dynamic> body = {
         "action": action,
-        if (extraData != null) "data": extraData
       };
+      if (extraData != null) {
+        body["data"] = extraData;
+      }
       
       request.add(utf8.encode(json.encode(body)));
       final response = await request.close();
@@ -128,10 +130,10 @@ class _DashboardPageState extends State<DashboardPage> {
           addLog("[SUCCESS] Perintah PC sukses dieksekusi.");
         }
       } else {
-        addLog("[ERROR] Server merespon dengan kode: ${response.statusCode}");
+        addLog("[ERROR] Server merespon dengan status: ${response.statusCode}");
       }
     } catch (e) {
-      addLog("[ERROR] Gagal terhubung ke PC Server! Pastikan app.py aktif di IP ${pcServerIpController.text}:5000 dan satu jaringan WiFi.");
+      addLog("[ERROR] Gagal terhubung ke PC Server di http://${pcServerIpController.text}:5000. Pastikan app.py sedang berjalan!");
     } finally {
       setState(() => isExecuting = false);
     }
@@ -141,73 +143,25 @@ class _DashboardPageState extends State<DashboardPage> {
     try {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 2);
-      
       final url = Uri.parse("http://${pcServerIpController.text}:5000/api/remote");
       final request = await client.postUrl(url);
       request.headers.set('content-type', 'application/json');
       
-      final body = {
+      final Map<String, dynamic> body = {
         "command": command,
-        if (dx != null) "dx": dx,
-        if (dy != null) "dy": dy
       };
+      if (dx != null) body["dx"] = dx;
+      if (dy != null) body["dy"] = dy;
       
       request.add(utf8.encode(json.encode(body)));
       await request.close();
     } catch (_) {
-      // Diabaikan untuk menjaga performa gesekan jari trackpad agar tetap mulus tanpa lag
-    }
-  }
-
-  Future<void> connectWirelessAdbViaServer() async {
-    final ip = adbIpController.text;
-    final port = adbPortController.text;
-    final code = adbPairCodeController.text;
-
-    if (ip.isEmpty || port.isEmpty || code.isEmpty) {
-      addLog("[ERROR] IP HP, Port, dan Pairing Code wajib diisi!");
-      return;
-    }
-
-    setState(() => isExecuting = true);
-    addLog("[*] Memulai pairing Wireless ADB ke $ip:$port...");
-
-    try {
-      final client = HttpClient();
-      client.connectionTimeout = const Duration(seconds: 10);
-      
-      final url = Uri.parse("http://${pcServerIpController.text}:5000/api/connect_wireless");
-      final request = await client.postUrl(url);
-      request.headers.set('content-type', 'application/json');
-      
-      final body = {
-        "ip": ip,
-        "port": port,
-        "code": code
-      };
-      
-      request.add(utf8.encode(json.encode(body)));
-      final response = await request.close();
-      
-      if (response.statusCode == 200) {
-        final responseBody = await response.transform(utf8.decoder).join();
-        final data = json.decode(responseBody);
-        addLog(data['log'].toString().trim());
-        if (data['success'] == true) {
-          setState(() => isAdbConnected = true);
-        }
-      } else {
-        addLog("[ERROR] Gagal menghubungkan nirkabel via server.");
-      }
-    } catch (e) {
-      addLog("[ERROR] Terjadi kesalahan saat request ADB: $e");
-    } finally {
-      setState(() => isExecuting = false);
+      // Diabaikan untuk menjaga performa drag trackpad agar tetap lancar
     }
   }
 
   // ==========================================
-  // WINDOWS TWEAK EXECUTION (LOKAL JIKA SEBAGAI WINDOWS APP NATIVE)
+  // WINDOWS TWEAK EXECUTION (NATIVE PROCESS)
   // ==========================================
   Future<void> executePcTweak(String action) async {
     if (!Platform.isWindows) {
@@ -322,7 +276,7 @@ class _DashboardPageState extends State<DashboardPage> {
         addLog("[NETWORK PC] DNS Cache berhasil di-flush.");
       }
     } catch (e) {
-      addLog("[ERROR] Gagal mengeksekusi perintah Windows: $e");
+      addLog("[ERROR] Gagal mengeksekusi perintah Windows lokal: $e");
     } finally {
       setState(() => isExecuting = false);
     }
@@ -789,7 +743,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             buildTweakCard(
               'Core Parking Disabled',
-              'Pastikan semua inti CPU tetap menjaga 100% tanpa kompromi.',
+              'Pastikan semua inti CPU tetap terjaga 100% tanpa kompromi.',
               Icons.analytics_outlined,
               () => sendPcTweakRequest('pc_core_parking'),
             ),
