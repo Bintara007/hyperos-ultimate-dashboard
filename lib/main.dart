@@ -102,7 +102,7 @@ class _DashboardPageState extends State<DashboardPage> {
         await Process.run('bcdedit', ['/set', 'useplatformclock', 'no']);
         await Process.run('bcdedit', ['/set', 'disabledynamictick', 'yes']);
         addLog("[SUCCESS] Windows Timer Resolution dikunci pada respon tertinggi 0.5ms!");
-      }
+      } 
       else if (action == 'pc_cpu_priority') {
         await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\HD-Player.exe\\PerfOptions', '/v', 'CpuPriorityClass', '/t', 'REG_DWORD', '/d', '3', '/f']);
         addLog("[SUCCESS] Prioritas CPU HD-Player.exe (Emulator) disetel ke 'High'.");
@@ -145,7 +145,7 @@ class _DashboardPageState extends State<DashboardPage> {
         addLog("[CONTROL PC] Akselerasi mouse dimatikan. 1:1 Raw input aktif.");
       }
       else if (action == 'pc_drag_hs') {
-        addLog("[CONTROL PC] Emulator Drag-Shot Optimizer V2 Aktif. Kurva SmoothMouse dilinearkan.");
+        addLog("[CONTROL PC] Emulator Drag-Shot Optimizer V2 Hack Aktif. Kurva SmoothMouse dilinearkan.");
       }
       else if (action == 'pc_network_throttle') {
         await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile', '/v', 'NetworkThrottlingIndex', '/t', 'REG_DWORD', '/d', '4294967295', '/f']);
@@ -352,7 +352,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   'HYPEROS',
                   style: TextStyle(
                     fontSize: 28,
-                    fontWeight: FontWeight.black,
+                    fontWeight: FontWeight.w900,
                     letterSpacing: 2,
                     color: Colors.white,
                   ),
@@ -409,6 +409,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
                 buildSidebarBtn('tab-mobile', '📱 Mobile Control', 'Wireless ADB & HS'),
+                buildSidebarBtn('tab-remote', '🖱️ Virtual Trackpad', 'Remote PC Controller'),
               ],
             ),
           ),
@@ -441,7 +442,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             Text(
               subtitle,
-              style: const TextStyle(fontSize: 11, color: Colors.slateGray),
+              style: const TextStyle(fontSize: 11, color: Colors.blueGrey),
             ),
           ],
         ),
@@ -505,7 +506,7 @@ class _DashboardPageState extends State<DashboardPage> {
             buildTweakCard(
               'Optimize CPU Priority',
               'Suntik prioritas CPU emulator HD-Player ke kelas tinggi.',
-              Icons.cpu_outlined,
+              Icons.memory,
               () => executePcTweak('pc_cpu_priority'),
             ),
             buildTweakCard(
@@ -753,7 +754,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ElevatedButton(
                     onPressed: runWirelessPairing,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.emerald,
+                      backgroundColor: Colors.teal,
                       minimumSize: const Size(140, 54),
                     ),
                     child: const Text('Aktifkan ADB', style: TextStyle(color: Colors.white)),
@@ -815,7 +816,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        buildSectionHeader('| Virtual Trackpad Remote PC'),
+        buildSectionHeader('🖱️ Virtual Trackpad Remote PC'),
         const SizedBox(height: 12),
         Container(
           width: double.infinity,
@@ -829,7 +830,7 @@ class _DashboardPageState extends State<DashboardPage> {
             child: Text(
               'GESER DI SINI\n(Fitur Remote Trackpad via HP Terdeteksi)',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.slateGray, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -899,7 +900,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(color: Colors.slateGray, fontSize: 11),
+                      style: const TextStyle(color: Colors.blueGrey, fontSize: 11),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -937,7 +938,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 6),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.slateGray, fontSize: 12, height: 1.5),
+                  style: const TextStyle(color: Colors.blueGrey, fontSize: 12, height: 1.5),
                 ),
               ],
             ),
@@ -985,7 +986,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   },
                   child: const Text(
                     'CLEAR',
-                    style: TextStyle(fontSize: 10, color: Colors.slateGray),
+                    style: TextStyle(fontSize: 10, color: Colors.blueGrey),
                   ),
                 ),
               ],
@@ -1027,7 +1028,7 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           IconButton(
             onPressed: () => setState(() => activeTab = 'tab-utama'),
-            icon: Icon(Icons.computer, color: activeTab == 'tab-utama' ? Colors.blue : Colors.slateGray),
+            icon: Icon(Icons.computer, color: activeTab == 'tab-utama' ? Colors.blue : Colors.blueGrey),
           ),
           IconButton(
             onPressed: () => setState(() => activeTab = 'tab-control'),
@@ -1043,6 +1044,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Color activeTabColor(String id) {
-    return activeTab == id ? Colors.blue : Colors.slateGray;
+    return activeTab == id ? Colors.blue : Colors.blueGrey;
   }
 }
