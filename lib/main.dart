@@ -160,8 +160,55 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  Future<void> connectWirelessAdbViaServer() async {
+    final ip = adbIpController.text;
+    final port = adbPortController.text;
+    final code = adbPairCodeController.text;
+
+    if (ip.isEmpty || port.isEmpty || code.isEmpty) {
+      addLog("[ERROR] IP HP, Port, dan Pairing Code wajib diisi!");
+      return;
+    }
+
+    setState(() => isExecuting = true);
+    addLog("[*] Memulai pairing Wireless ADB ke $ip:$port...");
+
+    try {
+      final client = HttpClient();
+      client.connectionTimeout = const Duration(seconds: 10);
+      
+      final url = Uri.parse("http://${pcServerIpController.text}:5000/api/connect_wireless");
+      final request = await client.postUrl(url);
+      request.headers.set('content-type', 'application/json');
+      
+      final Map<String, dynamic> body = {
+        "ip": ip,
+        "port": port,
+        "code": code
+      };
+      
+      request.add(utf8.encode(json.encode(body)));
+      final response = await request.close();
+      
+      if (response.statusCode == 200) {
+        final responseBody = await response.transform(utf8.decoder).join();
+        final data = json.decode(responseBody);
+        addLog(data['log'].toString().trim());
+        if (data['success'] == true) {
+          setState(() => isAdbConnected = true);
+        }
+      } else {
+        addLog("[ERROR] Gagal menghubungkan nirkabel via server.");
+      }
+    } catch (e) {
+      addLog("[ERROR] Terjadi kesalahan saat request ADB: $e");
+    } finally {
+      setState(() => isExecuting = false);
+    }
+  }
+
   // ==========================================
-  // WINDOWS TWEAK EXECUTION (NATIVE PROCESS)
+  // WINDOWS TWEAK EXECUTION (LOKAL JIKA SEBAGAI WINDOWS APP NATIVE)
   // ==========================================
   Future<void> executePcTweak(String action) async {
     if (!Platform.isWindows) {
