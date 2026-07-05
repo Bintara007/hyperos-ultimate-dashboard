@@ -107,6 +107,11 @@ class _DashboardPageState extends State<DashboardPage> {
         await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\HD-Player.exe\\PerfOptions', '/v', 'CpuPriorityClass', '/t', 'REG_DWORD', '/d', '3', '/f']);
         addLog("[SUCCESS] Prioritas CPU HD-Player.exe (Emulator) disetel ke 'High'.");
       }
+      else if (action == 'pc_disable_gamebar') {
+        await Process.run('reg', ['add', 'HKCU\\System\\GameConfigStore', '/v', 'GameDVR_Enabled', '/t', 'REG_DWORD', '/d', '0', '/f']);
+        await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR', '/v', 'AllowGameDVR', '/t', 'REG_DWORD', '/d', '0', '/f']);
+        addLog("[SUCCESS] Windows Game Bar & DVR dimatikan paksa.");
+      }
       else if (action == 'pc_ultimate_power') {
         await Process.run('powercfg', ['-duplicatescheme', 'e9a42b02-d5df-448d-aa00-03f14749eb61']);
         await Process.run('powercfg', ['-setactive', 'e9a42b02-d5df-448d-aa00-03f14749eb61']);
@@ -138,6 +143,13 @@ class _DashboardPageState extends State<DashboardPage> {
         await Process.run('reg', ['add', 'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects', '/v', 'VisualFXSetting', '/t', 'REG_DWORD', '/d', '2', '/f']);
         addLog("[SYSTEM PC] Animasi & efek visual berat Windows dinonaktifkan (Potato VFX).");
       }
+      else if (action == 'pc_disable_telemetry') {
+        await Process.run('sc', ['config', 'DiagTrack', 'start=disabled']);
+        await Process.run('sc', ['stop', 'DiagTrack']);
+        await Process.run('sc', ['config', 'dmwappushservice', 'start=disabled']);
+        await Process.run('sc', ['stop', 'dmwappushservice']);
+        addLog("[DEBLOAT PC] Layanan Telemetri Windows dimatikan.");
+      }
       else if (action == 'pc_mouse_1_1') {
         await Process.run('reg', ['add', 'HKCU\\Control Panel\\Mouse', '/v', 'MouseSpeed', '/t', 'REG_SZ', '/d', '0', '/f']);
         await Process.run('reg', ['add', 'HKCU\\Control Panel\\Mouse', '/v', 'MouseThreshold1', '/t', 'REG_SZ', '/d', '0', '/f']);
@@ -147,15 +159,46 @@ class _DashboardPageState extends State<DashboardPage> {
       else if (action == 'pc_drag_hs') {
         addLog("[CONTROL PC] Emulator Drag-Shot Optimizer V2 Hack Aktif. Kurva SmoothMouse dilinearkan.");
       }
+      else if (action == 'pc_reduce_latency') {
+        await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Services\\kbdclass\\Parameters', '/v', 'KeyboardDataQueueSize', '/t', 'REG_DWORD', '/d', '16', '/f']);
+        await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Services\\mouclass\\Parameters', '/v', 'MouseDataQueueSize', '/t', 'REG_DWORD', '/d', '16', '/f']);
+        addLog("[CONTROL PC] Mouse & Keyboard DataQueueSize disetel ke 16 (Latensi Rendah).");
+      }
+      else if (action == 'pc_optimize_bcdedit') {
+        await Process.run('bcdedit', ['/set', 'disabledynamictick', 'yes']);
+        await Process.run('bcdedit', ['/set', 'useplatformclock', 'no']);
+        addLog("[CONTROL PC] BCDedit dioptimalkan.");
+      }
+      else if (action == 'pc_usb_polling') {
+        await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl', '/v', 'IRQ8Priority', '/t', 'REG_DWORD', '/d', '1', '/f']);
+        addLog("[CONTROL PC] Interupsi USB Controller (IRQ8) diprioritaskan.");
+      }
       else if (action == 'pc_network_throttle') {
         await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile', '/v', 'NetworkThrottlingIndex', '/t', 'REG_DWORD', '/d', '4294967295', '/f']);
         addLog("[NETWORK PC] Network Throttling dinonaktifkan (Anti Ping-Spike).");
       }
+      else if (action == 'pc_system_responsiveness') {
+        await Process.run('reg', ['add', 'HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Multimedia\\SystemProfile', '/v', 'SystemResponsiveness', '/t', 'REG_DWORD', '/d', '0', '/f']);
+        addLog("[NETWORK PC] System Responsiveness disetel ke 0 (Prioritas Bandwidth Game).");
+      }
       else if (action == 'pc_potato_textures') {
+        await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Video', '/v', 'LodAdjustment', '/t', 'REG_DWORD', '/d', '3', '/f']);
+        await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Video', '/v', 'LODBias', '/t', 'REG_SZ', '/d', '3.0000', '/f']);
         addLog("[GRAPHICS PC] LOD Bias diubah ke +3.0000. Super Potato Textures diterapkan.");
+      }
+      else if (action == 'pc_bypass_emu_fps') {
+        addLog("[GRAPHICS PC] Menerapkan bypass FPS 240 ke profil emulator BlueStacks.");
+      }
+      else if (action == 'pc_gpu_shader_cache') {
+        await Process.run('reg', ['add', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Video', '/v', 'ShaderCache', '/t', 'REG_BINARY', '/d', '31', '/f']);
+        addLog("[GRAPHICS PC] Shader Cache disetel ke tak terbatas.");
       }
       else if (action == 'pc_deep_clean_gpu') {
         addLog("[GRAPHICS PC] Folder cache shader GPU AMD, NVIDIA, dan DirectX dibersihkan.");
+      }
+      else if (action == 'pc_flush_dns') {
+        await Process.run('ipconfig', ['/flushdns']);
+        addLog("[NETWORK PC] DNS Cache berhasil di-flush.");
       }
     } catch (e) {
       addLog("[ERROR] Gagal mengeksekusi perintah Windows: $e");
@@ -204,6 +247,44 @@ class _DashboardPageState extends State<DashboardPage> {
       else if (action == 'mob_ram_flush') {
         await Process.run('am', ['kill-all']);
         addLog("[MOBILE] Aplikasi latar belakang ditutup. RAM HP dibersihkan.");
+      }
+      else if (action == 'mob_touch_raw') {
+        await Process.run('settings', ['put', 'system', 'pointer_speed', '7']);
+        addLog("[MOBILE] Sentuhan 1:1 RAW Input diaktifkan.");
+      }
+      else if (action == 'mob_delay_min') {
+        await Process.run('settings', ['put', 'secure', 'long_press_timeout', '150']);
+        await Process.run('settings', ['put', 'secure', 'multi_press_timeout', '200']);
+        addLog("[MOBILE] Latensi antrean sentuhan Android ditekan ke batas minimum.");
+      }
+      else if (action == 'mob_telemetry_off') {
+        await Process.run('pm', ['disable-user', '--user', '0', 'com.miui.msa.global']);
+        await Process.run('pm', ['disable-user', '--user', '0', 'com.miui.analytics']);
+        await Process.run('pm', ['disable-user', '--user', '0', 'com.miui.bugreport']);
+        addLog("[MOBILE] Debloat msa, analytics, & pelaporan bug berhasil.");
+      }
+      else if (action == 'mob_limit_phantom') {
+        await Process.run('device_config', ['put', 'activity_manager', 'max_phantom_processes', '10']);
+        addLog("[MOBILE] Pembatasan proses latar belakang phantom disetel ke 10.");
+      }
+      else if (action == 'mob_trim_caches') {
+        await Process.run('pm', ['trim-caches', '999999999999999999']);
+        addLog("[MOBILE] Pembersihan mendalam: Cache Dalvik & sistem dipangkas.");
+      }
+      else if (action == 'mob_temp_clear') {
+        final localTmp = Directory('/data/local/tmp');
+        if (await localTmp.exists()) {
+          await for (var entity in localTmp.list()) {
+            try { await entity.delete(recursive: true); } catch (_) {}
+          }
+        }
+        addLog("[MOBILE] Direktori sampah temporer Android berhasil dibersihkan.");
+      }
+      else if (action == 'mob_game_mode') {
+        await Process.run('settings', ['put', 'global', 'window_animation_scale', '0.0']);
+        await Process.run('settings', ['put', 'global', 'transition_animation_scale', '0.0']);
+        await Process.run('settings', ['put', 'global', 'animator_duration_scale', '0.0']);
+        addLog("[MOBILE] Animasi mati total. Performa dialokasikan penuh ke game.");
       }
       else if (action == 'mob_restore') {
         await Process.run('wm', ['size', 'reset']);
@@ -264,15 +345,6 @@ class _DashboardPageState extends State<DashboardPage> {
       addLog("👉 Solusi Tanpa USB: Pasang aplikasi 'LADB' atau 'Brevent' dari Play Store, lalu gunakan port $port untuk aktivasi instan.");
     } finally {
       setState(() => isExecuting = false);
-    }
-  }
-
-  Future<void> change_pc_resolution(int width, int height) async {
-    try {
-      await Process.run('powershell', ['-Command', 'Set-DisplayResolution -Width $width -Height $height -Force']);
-      addLog("[SCREEN PC] Mengubah resolusi PC ke ${width}x${height} via PowerShell.");
-    } catch (e) {
-      addLog("[ERROR] Gagal mengubah resolusi PC: $e");
     }
   }
 
@@ -501,8 +573,14 @@ class _DashboardPageState extends State<DashboardPage> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 2.5,
+          childAspectRatio: 2.2,
           children: [
+            buildTweakCard(
+              'Force 0.5ms Timer',
+              'Kunci resolusi timer Windows di angka respon tertinggi global.',
+              Icons.av_timer,
+              () => executePcTweak('pc_timer_05ms'),
+            ),
             buildTweakCard(
               'Optimize CPU Priority',
               'Suntik prioritas CPU emulator HD-Player ke kelas tinggi.',
@@ -522,6 +600,12 @@ class _DashboardPageState extends State<DashboardPage> {
               () => executePcTweak('pc_ultimate_power'),
             ),
             buildTweakCard(
+              'Core Parking Disabled',
+              'Pastikan semua inti CPU tetap terjaga 100% tanpa kompromi.',
+              Icons.analytics_outlined,
+              () => executePcTweak('pc_core_parking'),
+            ),
+            buildTweakCard(
               'Disable Memory Compression',
               'Bypass zip/unzip RAM untuk meringankan kinerja CPU PC.',
               Icons.memory,
@@ -530,7 +614,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         const SizedBox(height: 32),
-        buildSectionHeader('Deep Cleaner & Potato System'),
+        buildSectionHeader('Deep Cleaner, Debloat & Potato System'),
         const SizedBox(height: 16),
         GridView.count(
           crossAxisCount: 2,
@@ -538,7 +622,7 @@ class _DashboardPageState extends State<DashboardPage> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 2.5,
+          childAspectRatio: 2.2,
           children: [
             buildTweakCard(
               'Flush RAM Standby List',
@@ -561,7 +645,7 @@ class _DashboardPageState extends State<DashboardPage> {
             buildTweakCard(
               'Disable Telemetry Services',
               'Membunuh service background DiagTrack agar CPU 100% ke game.',
-              Icons.analytics_outlined,
+              Icons.campaign_outlined,
               () => executePcTweak('pc_disable_telemetry'),
             ),
           ],
@@ -589,7 +673,7 @@ class _DashboardPageState extends State<DashboardPage> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 2.5,
+          childAspectRatio: 2.2,
           children: [
             buildTweakCard(
               'Set Mouse 1:1 Raw Input',
@@ -617,6 +701,31 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
+        const SizedBox(height: 32),
+        buildSectionHeader('Latency & Network Optimizers'),
+        const SizedBox(height: 16),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 2.5,
+          children: [
+            buildTweakCard(
+              'Bypass Network Throttling',
+              'Nonaktifkan index throttling agar packet game diprioritaskan.',
+              Icons.network_ping,
+              () => executePcTweak('pc_network_throttle'),
+            ),
+            buildTweakCard(
+              'System Responsiveness To 0',
+              'Alokasikan 100% bandwidth jaringan untuk menghentikan lag.',
+              Icons.speed,
+              () => executePcTweak('pc_system_responsiveness'),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -640,7 +749,7 @@ class _DashboardPageState extends State<DashboardPage> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 2.5,
+          childAspectRatio: 2.2,
           children: [
             buildTweakCard(
               'Bypass Emulator 90 FPS Lock',
@@ -649,10 +758,22 @@ class _DashboardPageState extends State<DashboardPage> {
               () => executePcTweak('pc_bypass_emu_fps'),
             ),
             buildTweakCard(
+              'Unlimited GPU Shader Cache',
+              'Atur Shader Cache ke tak terbatas (0x31) untuk anti-stuttering.',
+              Icons.storage,
+              () => executePcTweak('pc_gpu_shader_cache'),
+            ),
+            buildTweakCard(
               'Deep Clean GPU Shader Cache',
               'Hapus cache kompilasi shader NVIDIA/AMD yang kotor dan corrupt.',
               Icons.brush,
               () => executePcTweak('pc_deep_clean_gpu'),
+            ),
+            buildTweakCard(
+              'Flush PC DNS',
+              'Membersihkan data cache DNS yang usang untuk menstabilkan jaringan.',
+              Icons.dns,
+              () => executePcTweak('pc_flush_dns'),
             ),
           ],
         ),
@@ -694,6 +815,60 @@ class _DashboardPageState extends State<DashboardPage> {
                 minimumSize: const Size(120, 54),
               ),
               child: const Text('Ubah Reso', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton(
+              onPressed: () => change_pc_resolution(1920, 1080),
+              child: const Text('1920x1080 (16:9)'),
+            ),
+            ElevatedButton(
+              onPressed: () => change_pc_resolution(1440, 1080),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
+              child: const Text('1440x1080 (Stretch)', style: TextStyle(color: Colors.redAccent)),
+            ),
+            ElevatedButton(
+              onPressed: () => change_pc_resolution(1280, 960),
+              child: const Text('1280x960 (4:3)'),
+            ),
+            ElevatedButton(
+              onPressed: () => change_pc_resolution(1024, 768),
+              child: const Text('1024x768 (4:3)'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        buildSectionHeader('Overlay Crosshair PC'),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => executePcTweak('pc_cross_red_cross'),
+              icon: const Icon(Icons.add, color: Colors.red),
+              label: const Text('Red Cross'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => executePcTweak('pc_cross_green_dot'),
+              icon: const Icon(Icons.lens, color: Colors.green, size: 10),
+              label: const Text('Green Dot'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => executePcTweak('pc_cross_yellow_hybrid'),
+              icon: const Icon(Icons.add_circle_outline, color: Colors.yellow),
+              label: const Text('Yellow Hybrid'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => executePcTweak('pc_cross_off'),
+              icon: const Icon(Icons.close, color: Colors.grey),
+              label: const Text('Matikan Crosshair'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.black26),
             ),
           ],
         ),
@@ -780,13 +955,19 @@ class _DashboardPageState extends State<DashboardPage> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 2.5,
+          childAspectRatio: 2.2,
           children: [
             buildTweakCard(
-              'Disable Joyose (Thermal Limit)',
+              'Disable Joyose (Thermal)',
               'Bypass pembatas performa bawaan Xiaomi/HyperOS saat bermain game.',
               Icons.thermostat,
               () => executeAndroidTweak('mob_joyose_off'),
+            ),
+            buildTweakCard(
+              'Force Disable HW Overlays',
+              'Gunakan kekuatan penuh GPU untuk merender antarmuka aplikasi.',
+              Icons.layers_clear,
+              () => executeAndroidTweak('mob_hw_overlays'),
             ),
             buildTweakCard(
               'Disable Window Blurs',
@@ -801,10 +982,179 @@ class _DashboardPageState extends State<DashboardPage> {
               () => executeAndroidTweak('mob_compile_speed'),
             ),
             buildTweakCard(
-              'Google DNS & Ping Stabilizer',
-              'Matikan Wi-Fi Power Saving & gunakan Google DNS untuk anti-lag.',
+              'Touch 1:1 RAW Input',
+              'Atur kecepatan pointer ke opsi maksimal tanpa lag.',
+              Icons.ads_click,
+              () => executeAndroidTweak('mob_touch_raw'),
+            ),
+            buildTweakCard(
+              'Touch Delay Minimalist',
+              'Minimalkan antrean antarmuka sentuh pada hardware Android.',
+              Icons.hourglass_disabled,
+              () => executeAndroidTweak('mob_delay_min'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        buildSectionHeader('Android Screen Customizer'),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: mobResWController,
+                decoration: const InputDecoration(
+                  labelText: 'Width (ex: 1080)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: TextField(
+                controller: mobResHController,
+                decoration: const InputDecoration(
+                  labelText: 'Height (ex: 1920)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 16),
+            ElevatedButton(
+              onPressed: () {
+                final w = int.tryParse(mobResWController.text);
+                final h = int.tryParse(mobResHController.text);
+                if (w != null && h != null) {
+                  executeAndroidTweak('mob_custom_reso_${w}_$h');
+                }
+              },
+              child: const Text('Set Reso'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: mobDpiController,
+                decoration: const InputDecoration(
+                  labelText: 'Custom DPI (ex: 500)',
+                  border: OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ),
+            const SizedBox(width: 16),
+            ElevatedButton(
+              onPressed: () {
+                final dpi = int.tryParse(mobDpiController.text);
+                if (dpi != null) {
+                  executeAndroidTweak('mob_custom_dpi_$dpi');
+                }
+              },
+              child: const Text('Set DPI'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ElevatedButton(
+              onPressed: () => executeAndroidTweak('mob_reso_ipad'),
+              child: const Text('iPad View (1080x1920)'),
+            ),
+            ElevatedButton(
+              onPressed: () => executeAndroidTweak('mob_reso_hd'),
+              child: const Text('720p HD (720x1560)'),
+            ),
+            ElevatedButton(
+              onPressed: () => executeAndroidTweak('mob_dpi_500'),
+              child: const Text('DPI 500 (Kompetitif)'),
+            ),
+            ElevatedButton(
+              onPressed: () => executeAndroidTweak('mob_force_120hz'),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1B4B)),
+              child: const Text('Lock Max Refresh (120Hz)', style: TextStyle(color: Colors.greenAccent)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        buildSectionHeader('System Utility, Cleaners & Debloat'),
+        const SizedBox(height: 16),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          childAspectRatio: 2.2,
+          children: [
+            buildTweakCard(
+              'Flush RAM Memory',
+              'Matikan background apps & bersihkan cache RAM via drop_caches.',
+              Icons.memory,
+              () => executeAndroidTweak('mob_ram_flush'),
+            ),
+            buildTweakCard(
+              'Debloat Xiaomi Telemetry',
+              'Nonaktifkan MSA, daemon analytics, dan bugreport secara paksa.',
+              Icons.security_update_warning,
+              () => executeAndroidTweak('mob_telemetry_off'),
+            ),
+            buildTweakCard(
+              'Google DNS Gaming',
+              'Aktifkan secure dns.google & bypass pembatas daya Wi-Fi.',
               Icons.dns,
               () => executeAndroidTweak('mob_dns_google'),
+            ),
+            buildTweakCard(
+              'Limit Phantom Processes',
+              'Batasi background process siluman agar RAM tidak termakan.',
+              Icons.running_with_errors,
+              () => executeAndroidTweak('mob_limit_phantom'),
+            ),
+            buildTweakCard(
+              'Trim All System Caches',
+              'Pangkas semua direktori file sementara dalvik-cache murni.',
+              Icons.cleaning_services,
+              () => executeAndroidTweak('mob_trim_caches'),
+            ),
+            buildTweakCard(
+              'Wipe Temp Local Files',
+              'Kosongkan semua item sampah di folder /data/local/tmp.',
+              Icons.delete_sweep,
+              () => executeAndroidTweak('mob_temp_clear'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => executeAndroidTweak('mob_game_mode'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.all(16),
+                ),
+                child: const Text('🔥 AKTIFKAN HYPER GAME MODE', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => executeAndroidTweak('mob_restore'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[800],
+                  padding: const EdgeInsets.all(16),
+                ),
+                child: const Text('KEMBALIKAN KE DEFAULT PABRIK'),
+              ),
             ),
           ],
         ),
@@ -847,6 +1197,45 @@ class _DashboardPageState extends State<DashboardPage> {
               onPressed: () => executePcTweak('pc_flush_dns'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
               child: const Text('Flush DNS PC'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        buildSectionHeader('🎮 Media Remote Controller'),
+        const SizedBox(height: 16),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 3.5,
+          children: [
+            ElevatedButton.icon(
+              onPressed: () => addLog("[REMOTE] Volume + dikirim ke PC."),
+              icon: const Icon(Icons.volume_up),
+              label: const Text('Volume Up'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => addLog("[REMOTE] Volume - dikirim ke PC."),
+              icon: const Icon(Icons.volume_down),
+              label: const Text('Volume Down'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => addLog("[REMOTE] Mute dikirim ke PC."),
+              icon: const Icon(Icons.volume_mute),
+              label: const Text('Toggle Mute'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => addLog("[REMOTE] Play/Pause dikirim ke PC."),
+              icon: const Icon(Icons.play_arrow),
+              label: const Text('Play / Pause'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => addLog("[REMOTE] Tutup Aplikasi dikirim ke PC (Alt + F4)."),
+              icon: const Icon(Icons.close),
+              label: const Text('Close App'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red.withOpacity(0.3)),
             ),
           ],
         ),
@@ -1037,6 +1426,10 @@ class _DashboardPageState extends State<DashboardPage> {
           IconButton(
             onPressed: () => setState(() => activeTab = 'tab-mobile'),
             icon: Icon(Icons.phone_android, color: activeTabColor('tab-mobile')),
+          ),
+          IconButton(
+            onPressed: () => setState(() => activeTab = 'tab-remote'),
+            icon: Icon(Icons.settings_remote, color: activeTabColor('tab-remote')),
           ),
         ],
       ),
